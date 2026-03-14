@@ -1,0 +1,81 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mysql"
+}
+
+enum UserRoles {
+    Admin
+    Manager
+    Finance
+    User
+}
+
+enum GatewayPriorities {
+    High
+    Medium
+    Low
+}
+
+enum TransactionStatus {
+    Refunded
+    Purchased
+}
+
+model Users {
+    id Int @id @default(autoincrement())
+    password String
+    email String @unique
+    role UserRoles @default(User)
+}
+
+model Products {
+    id Int @id @default(autoincrement())
+    name String
+    amount Decimal @db.Decimal(10, 2)
+
+    transactionProducts TransactionProducts[] @relation()
+}
+
+model Gateways {
+    id Int @id @default(autoincrement())
+    name String
+    isActive Boolean @default(true)
+    priority GatewayPriorities @default(Low)
+
+    transaction Transactions[] @relation()
+}
+
+model Clients {
+    id Int @id @default(autoincrement())
+    name String
+    email String @unique
+
+    transaction Transactions[] @relation()
+}
+
+model TransactionProducts {
+    id Int @id @default(autoincrement()) 
+    transaction_id Int
+    product_id Int
+    quantity Int
+
+    product Products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+    transaction Transactions @relation(fields: [transaction_id], references: [id], onDelete: Cascade)
+}
+
+model Transactions {
+    id Int @id @default(autoincrement())
+    client_id Int
+    external_id String @unique
+    gateway_id Int
+    status TransactionStatus @default(Purchased)
+    amount Decimal @db.Decimal(10, 2)
+    card_last_numbers String
+
+    gateway Gateways @relation(fields: [gateway_id], references: [id])
+    client Clients @relation(fields: [client_id], references: [id], onDelete: Cascade)
+    transactionProducts TransactionProducts[] @relation()
+}

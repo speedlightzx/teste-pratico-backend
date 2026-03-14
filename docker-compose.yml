@@ -1,0 +1,49 @@
+services:
+  banco:
+    container_name: mysql
+    image: mysql:8
+    environment:
+      - MYSQL_ROOT_PASSWORD=teste1234
+      - MYSQL_DATABASE=api
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3333:3333
+    environment:
+      - NODE_ENV=production
+      - PORT=3333
+      - APP_KEY=PVe-DFDFfCn8U3OoaZD-rJup8baBgN4h
+      - HOST=0.0.0.0
+      - LOG_LEVEL=info
+      - DB_URL=mysql://root:teste1234@banco:3306/api
+      - DB_USER=root
+      - DB_PASSWORD=teste1234
+      - DB_HOST=banco
+      - DB_DATABASE=api
+      - GATEWAY1_URL=http://mocks:3001
+      - GATEWAY2_URL=http://mocks:3002
+      - JWT_SECRET=jwtsupersecreto123
+    depends_on:
+      - banco
+
+  mocks:
+    container_name: mocks
+    image: matheusprotzen/gateways-mock
+    restart: always
+    ports:
+      - 3001:3001
+      - 3002:3002
+    depends_on:
+      - banco
+      - app
+
+volumes:
+  mysql_data:
